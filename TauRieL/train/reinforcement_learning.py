@@ -6,21 +6,16 @@ from model.actor_critic import ActorCritic
 import torch.optim as optim
 from train.Data_Generator import TSPDataset
 
-dataset = TSPDataset(2, 5)
-points_list = dataset.data['Points_List']
-solutions = dataset.data['Solutions']
-first_cities = points_list[0]
-first_solutions = solutions[0]
-baseline = 0
-
-actor_critic = ActorCritic(1, 5, 4)
-ac_optimizer = optim.Adam(actor_critic.parameters(), lr=0.01)
-transition_matrix = initialize_transition_matrix(first_cities)
-
-print(transition_matrix)
+dataset = TSPDataset(100, 5)
 
 
-def reinforcement_learning(baseline=0):
+# points_list = dataset.data['Points_List']
+# solutions = dataset.data['Solutions']
+# first_cities = points_list[0]
+# first_solutions = solutions[0]
+
+
+def reinforcement_learning(first_cities, baseline=0):
     phi, pi = random_episode(first_cities)
     l_pi = route_distance(phi)
     for t in range(1000):
@@ -55,11 +50,26 @@ def reinforcement_learning(baseline=0):
     return pi, transition_matrix, l_pi
 
 
-s_t, t_m, r_d = reinforcement_learning()
+sum_pred = []
+sum_exp = []
+for i, data in enumerate(dataset):
+    print(i)
+    first_cities = data['Points']
+    first_solutions = data['Solution']
 
-print(f'Shortest tour: {s_t}, length: {r_d}  transition matrix: \n {t_m}')
-print(f'Real shortest tour: {first_solutions}, {route_distance(first_cities[first_solutions])}')
+    actor_critic = ActorCritic(1, 5, 4)
+    ac_optimizer = optim.Adam(actor_critic.parameters(), lr=0.01)
+    transition_matrix = initialize_transition_matrix(first_cities)
+    s_t, t_m, r_d = reinforcement_learning(first_cities)
+    sum_pred.append(r_d)
+    sum_exp.append(route_distance(first_cities[first_solutions]))
 
-c = [[0.38082261, 0.62007715], [0.76648838, 0.42463141], [0.2885871, 0.18421117], [0.42288354, 0.57428997],
-     [0.84263721, 0.02062535]]
-s = [0, 2, 4, 1, 3]
+print(np.mean(sum_exp))
+print(np.mean(sum_pred))
+
+# print(f'Shortest tour: {s_t}, length: {r_d}  transition matrix: \n {t_m}')
+# print(f'Real shortest tour: {first_solutions}, {route_distance(first_cities[first_solutions])}')
+#
+# c = [[0.38082261, 0.62007715], [0.76648838, 0.42463141], [0.2885871, 0.18421117], [0.42288354, 0.57428997],
+#      [0.84263721, 0.02062535]]
+# s = [0, 2, 4, 1, 3]
