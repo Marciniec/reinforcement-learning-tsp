@@ -1,28 +1,59 @@
-import torch
 import torch.nn as nn
-from torch.autograd import Variable
-import torch.nn.functional as F
 
 
-class ActorCritic(nn.Module):
-    def __init__(self, num_inputs, num_actions, hidden_size, learning_rate=3e-4):
-        super(ActorCritic, self).__init__()
+class Actor(nn.Module):
+    def __init__(self, number_of_inputs, number_of_cities):
+        super(Actor, self).__init__()
 
-        self.num_actions = num_actions
-        self.critic_linear1 = nn.Linear(num_inputs, hidden_size)
-        self.critic_linear2 = nn.Linear(hidden_size, 1)
+        hidden_layer = 64
+        hidden_layer_2 = 32
+        self.actor = nn.Sequential(nn.Linear(number_of_inputs, hidden_layer),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_layer, hidden_layer_2),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_layer_2, hidden_layer_2),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_layer_2, hidden_layer_2),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_layer_2, hidden_layer_2),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_layer_2, hidden_layer_2),
+                                   nn.ReLU(),
+                                   nn.Linear(hidden_layer_2, number_of_cities),
+                                   nn.Softmax()
+                                   )
 
-        self.actor_linear1 = nn.Linear(num_inputs, hidden_size)
-        self.actor_linear2 = nn.Linear(hidden_size, num_actions)
-        self.saved_actions = []
-        self.rewards = []
+    def forward(self, permutations):
+        x = permutations.flatten()
+        update_vector_v = self.actor(x)
 
-    def forward(self, state):
-        state = Variable(torch.from_numpy(state).float().unsqueeze(0))
-        value = F.relu(self.critic_linear1(state))
-        value = self.critic_linear2(value)
+        return update_vector_v
 
-        policy_dist = F.relu(self.actor_linear1(state))
-        policy_dist = F.softmax(self.actor_linear2(policy_dist), dim=1)
 
-        return value, policy_dist
+class Critic(nn.Module):
+    def __init__(self, number_of_inputs):
+        super(Critic, self).__init__()
+
+        hidden_layer = 64
+        hidden_layer_2 = 32
+        hidden_layer_3 = 16
+        hidden_layer_4 = 16
+        output_1 = 1
+
+        self.critic = nn.Sequential(nn.Linear(number_of_inputs, hidden_layer),
+                                    nn.ReLU(),
+                                    nn.Linear(hidden_layer, hidden_layer_2),
+                                    nn.ReLU(),
+                                    nn.Linear(hidden_layer_2, hidden_layer_2),
+                                    nn.ReLU(),
+                                    nn.Linear(hidden_layer_2, hidden_layer_3),
+                                    nn.ReLU(),
+                                    nn.Linear(hidden_layer_3, hidden_layer_4),
+                                    nn.ReLU(),
+                                    nn.Linear(hidden_layer_4, output_1))
+
+    def forward(self, permutations):
+        x = permutations.flatten()
+        baseline = self.critic(x)
+
+        return baseline
