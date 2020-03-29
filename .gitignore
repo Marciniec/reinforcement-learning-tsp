@@ -102,3 +102,13 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+TauRieL/train/Data_Generator.py
+
+TauRieL/train/dataset_5.pickle
+
+TauRieL/train/output.txt
+
+TauRieL/train/points.pcl.npy
+
+TauRieL/train/tmp.py
