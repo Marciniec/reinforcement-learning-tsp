@@ -1,4 +1,4 @@
-from train.action import select_action
+from train.action import select_action, select_action_greedily
 import numpy as np
 
 
@@ -10,6 +10,17 @@ def sample_episodes(start_state, cities, transition_matrix):
     tour = [current_state]
     while cities_number < len(cities) - 1:
         current_state = select_action(current_state, tour, transition_matrix)
+        tour.append(current_state)
+        cities_number += 1
+    return tour
+
+
+def sample_episode_greedily(cities, transition_matrix):
+    cities_number = 0
+    current_state = 0
+    tour = [0]
+    while cities_number < len(cities) - 1:
+        current_state = select_action_greedily(current_state, tour, transition_matrix, cities)
         tour.append(current_state)
         cities_number += 1
     return tour
@@ -42,7 +53,7 @@ def nearest_neighbour_initialize_transition_matrix(cities):
             if i == j:
                 transition_matrix[i, j] = 0
             else:
-                transition_matrix[i, j] = (1/np.linalg.norm(cities[i] - cities[j])) / length_reciprocal
+                transition_matrix[i, j] = (1 / np.linalg.norm(cities[i] - cities[j])) / length_reciprocal
     return transition_matrix
 
 
@@ -52,5 +63,5 @@ def calculate_sum_reciprocal(index, cities):
     for i in range(len(cities)):
         if i == index:
             continue
-        length += 1/np.linalg.norm(base_coordinates - cities[i])
+        length += 1 / np.linalg.norm(base_coordinates - cities[i])
     return length
