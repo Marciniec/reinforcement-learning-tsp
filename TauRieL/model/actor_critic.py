@@ -22,9 +22,7 @@ class Actor(nn.Module):
 
     def forward(self, permutations):
         x = permutations.flatten()
-        probs = self.actor(x)
-        dist = Categorical(probs)
-        return dist
+        return self.actor(x)
 
 
 class Critic(nn.Module):

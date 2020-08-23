@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 steps = 250
 n = 20
-dataset = TSPDataset(3, n)
+dataset = TSPDataset(1, n)
 
 points_list = dataset.data['Points_List']
 solutions = dataset.data['Solutions']
@@ -25,7 +25,7 @@ def reinforcement_learning(first_cities, baseline=0):
     l_pi = route_distance(phi)
     for t in range(steps):
         phi_samples = []
-        for i in range(250):
+        for _ in range(250):
             phi_samples.append(sample_episode_greedily(first_cities, transition_matrix))
         lengths = [route_distance(first_cities[cities]) for cities in phi_samples]
         j = np.argmin(lengths)

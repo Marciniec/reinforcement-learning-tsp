@@ -1,4 +1,4 @@
-from train.action import select_action, select_action_greedily
+from train.action import select_action, select_action_greedily, select_action_greedily_probabilities
 import numpy as np
 
 
@@ -24,6 +24,19 @@ def sample_episode_greedily(cities, transition_matrix):
         tour.append(current_state)
         cities_number += 1
     return tour
+
+
+def sample_episode_greedily_with_probabilities(cities, transition_matrix):
+    cities_number = 0
+    current_state = 0
+    tour = [0]
+    tour_probabilities = [1]
+    while cities_number < len(cities) - 1:
+        current_state, current_probability = select_action_greedily_probabilities(current_state, tour, transition_matrix, cities)
+        tour.append(current_state)
+        tour_probabilities.append(current_probability)
+        cities_number += 1
+    return tour, tour_probabilities
 
 
 def random_episode(cities):
