@@ -1,4 +1,5 @@
 import torch.nn as nn
+from torch.distributions import Categorical
 
 
 class Actor(nn.Module):
@@ -15,19 +16,13 @@ class Actor(nn.Module):
                                    nn.ReLU(),
                                    nn.Linear(hidden_layer_2, hidden_layer_2),
                                    nn.ReLU(),
-                                   nn.Linear(hidden_layer_2, hidden_layer_2),
-                                   nn.ReLU(),
-                                   nn.Linear(hidden_layer_2, hidden_layer_2),
-                                   nn.ReLU(),
                                    nn.Linear(hidden_layer_2, number_of_cities),
                                    nn.Softmax()
                                    )
 
     def forward(self, permutations):
         x = permutations.flatten()
-        update_vector_v = self.actor(x)
-
-        return update_vector_v
+        return self.actor(x)
 
 
 class Critic(nn.Module):
@@ -54,6 +49,6 @@ class Critic(nn.Module):
 
     def forward(self, permutations):
         x = permutations.flatten()
-        baseline = self.critic(x)
+        value = self.critic(x)
 
-        return baseline
+        return value
