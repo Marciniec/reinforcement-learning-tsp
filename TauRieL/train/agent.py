@@ -21,7 +21,6 @@ class Agent:
         self.tour_from_ptr_net = None
         self.length_from_ptr_net = None
 
-
     def sample_random_episode(self, input_city_permutation):
         permutation, order = random_episode(input_city_permutation)
         self.shortest_tour_length = route_distance(permutation)
@@ -58,28 +57,18 @@ class Agent:
                         input_city_permutation[i] - input_city_permutation[j])) / length_reciprocal
         self.transition_matrix = transition_matrix
 
-    def init_transition_matrix_from_pointer_net(self, tsp_dataset):
-        model = torch.load(self.model_path)
-        model.eval()
-        input_city_permutation = torch.from_numpy(tsp_dataset.data['Points_List'][0]).float()
+    def init_transition_matrix_from_pointer_net(self, data_points):
+        input_city_permutation, ptrnet_solution, o, p = data_points
         transition_matrix = np.zeros((len(input_city_permutation), len(input_city_permutation)))
-        validation_data_loader = DataLoader(tsp_dataset,
-                                            batch_size=self.model_batch_size,
-                                            shuffle=True,
-                                            num_workers=1)
-        for dev_batch_idx, dev_batch in enumerate(validation_data_loader):
-            validation_batch = Variable(dev_batch['Points'])
-            validation_batch = validation_batch.cuda()
-            o, p = model(validation_batch)
-            probs = o.contiguous().view(-1, o.size()[-1]).cpu().detach().numpy()
-            next_index = 0
-            for i in range(1, len(probs)):
-                transition_matrix[next_index] = probs[i]
-                next_index = np.argmax(probs[i])
-            self.transition_matrix = transition_matrix
-            self.tour_from_ptr_net = p.contiguous().view(-1, p.size()[-1]).cpu().detach().numpy()
-            self.length_from_ptr_net = route_distance(input_city_permutation[self.tour_from_ptr_net])
-            return
+        probs = o.contiguous().view(-1, o.size()[-1]).cpu().detach().numpy()
+        next_index = 0
+        for i in range(1, len(probs)):
+            transition_matrix[next_index] = probs[i]
+            next_index = np.argmax(probs[i])
+        self.transition_matrix = transition_matrix
+        self.tour_from_ptr_net = p.contiguous().view(-1, p.size()[-1]).cpu().detach().numpy()[0]
+        self.length_from_ptr_net = route_distance(input_city_permutation[self.tour_from_ptr_net].cpu().detach().numpy())
+        return
 
     def update_transition_matrix(self, update_vector: np.ndarray, points: Points):
         for index in points.indices:
