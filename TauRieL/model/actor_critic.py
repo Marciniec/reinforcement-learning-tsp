@@ -21,8 +21,9 @@ class Actor(nn.Module):
                                    )
 
     def forward(self, permutations):
-        x = permutations.flatten()
-        return self.actor(x)
+        probs = self.actor(permutations)
+        dist = Categorical(probs)
+        return dist, probs
 
 
 class Critic(nn.Module):
@@ -48,7 +49,7 @@ class Critic(nn.Module):
                                     nn.Linear(hidden_layer_4, output_1))
 
     def forward(self, permutations):
-        x = permutations.flatten()
-        value = self.critic(x)
+        # x = permutations.flatten()
+        value = self.critic(permutations)
 
         return value

@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from train.PointerNet import PointerNet
-
+from environment.environment import  reward_func
 
 class Agent:
     def __init__(self, model_path, batch_size):
@@ -32,9 +32,9 @@ class Agent:
             phi_samples_cities_indices, phi_samples_cities_probabilities = sample_episode_greedily_with_probabilities(
                 input_city_permutation,
                 self.transition_matrix)
-            sampled_points = Points(phi_samples_cities_indices, input_city_permutation[phi_samples_cities_indices],
-                                    input_city_permutation, phi_samples_cities_probabilities)
-            sampled_points.calculate_length()
+            indices_tensor = torch.FloatTensor(phi_samples_cities_indices)
+            permutation_tensor = torch.FloatTensor(input_city_permutation[phi_samples_cities_indices])
+            sampled_points = (indices_tensor, permutation_tensor)
             phi_samples_cities.append(sampled_points)
         return phi_samples_cities
 
@@ -58,21 +58,22 @@ class Agent:
         self.transition_matrix = transition_matrix
 
     def init_transition_matrix_from_pointer_net(self, data_points):
-        input_city_permutation, ptrnet_solution, o, p = data_points
-        transition_matrix = np.zeros((len(input_city_permutation), len(input_city_permutation)))
-        probs = o.contiguous().view(-1, o.size()[-1]).cpu().detach().numpy()
+        input_city_permutation, o, p = data_points
+        transition_matrix = torch.ones((len(input_city_permutation), len(input_city_permutation))).to('cuda')
+        probs = o.contiguous().view(-1, o.size()[-1])
+
         next_index = 0
         for i in range(1, len(probs)):
             transition_matrix[next_index] = probs[i]
-            next_index = np.argmax(probs[i])
+            next_index = torch.argmax(probs[i]).item()
         self.transition_matrix = transition_matrix
-        self.tour_from_ptr_net = p.contiguous().view(-1, p.size()[-1]).cpu().detach().numpy()[0]
-        self.length_from_ptr_net = route_distance(input_city_permutation[self.tour_from_ptr_net].cpu().detach().numpy())
+        self.tour_from_ptr_net = p.contiguous().view(-1, p.size()[-1])
+        self.length_from_ptr_net = reward_func(input_city_permutation[self.tour_from_ptr_net])
         return
 
-    def update_transition_matrix(self, update_vector: np.ndarray, points: Points):
+    def update_transition_matrix(self, update_vector: torch.tensor, points: Points):
         for index in points.indices:
-            j_index = np.argmax(self.transition_matrix[index])
+            j_index = torch.argmax(self.transition_matrix[index])
             self.transition_matrix[index, j_index] = self.transition_matrix[index, j_index] + self.epsilon * (
                     update_vector[index] - self.transition_matrix[index, j_index])
 

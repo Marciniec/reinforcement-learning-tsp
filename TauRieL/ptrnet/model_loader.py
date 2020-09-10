@@ -21,8 +21,7 @@ class ModelLoader:
                                  shuffle=True,
                                  num_workers=1)
         for dev_batch_idx, dev_batch in enumerate(data_loader):
-            batch = Variable(dev_batch['Points'])
-            target_batch = Variable(dev_batch['Solution'])
-            batch = batch.cuda()
+            batch = Variable(dev_batch).float()
+            batch = batch.to('cuda')
             o, p = self.model(batch)
-            yield list(zip(batch, target_batch, o, p))
+            yield list(zip(batch, o, p))
